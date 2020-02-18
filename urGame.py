@@ -21,6 +21,39 @@ class Game:
             print()
         return matchfield
 
+    def start(self):
+        print("Im Start")
+        for i in range(2):
+
+            print("Diceroll")
+            roll = self.rollDice()[4] #Forth Element of List is the total amount of steps
+
+
+            self.showPossibleMoves(roll)
+            self.renderMatchfield()
+
+            self.switchPlayerTurn()
+
+    def showPossibleMoves(self,roll):
+
+        if roll == 0: #Nothing possible with 0, --> Skip
+            return
+        newStonePossible = self.isNewStonePossible(roll)
+        print("Possible to lay new stone")
+        print(newStonePossible)
+
+
+    def isNewStonePossible(self,roll):
+        roll -=1 #Adjusting to the array 4 -> 3, because 0,1,2,3
+        print(roll)
+        if self.PlayerTurn == 0: #White begins and ends in y=2
+            if self.matchfield[2][3-roll].color != self.PlayerTurn:
+                return True
+        else:
+            if self.matchfield[0][3-roll].color != self.PlayerTurn:
+                return True
+        return False
+
     def switchPlayerTurn(self):
         if self.PlayerTurn == 0:
             self.PlayerTurn = 1
@@ -63,7 +96,7 @@ class Game:
             for element in row:
                 if element.color == 0:
                     print("X",end=" ")
-                if element.color == 1:
+                elif element.color == 1:
                     print("O",end=" ")
                 else:
                     print("E",end=" ")
@@ -120,5 +153,5 @@ class Stone:
 
 
 game = Game()
-game.rollDice()
 game.renderMatchfield()
+game.start()
