@@ -3,12 +3,13 @@ import random
 class Game:
     def __init__(self):
         self.matchfield = self.populateMatchfield()
+        self.moveField = self.populateMovefield()
         self.PlayerTurn = 0 # 0 White 1 Black
         self.Player1Stones = self.createStones(0) #White Stones
         self.Player2Stones = self.createStones(1) #Black Stones
         self.Player1StonesFinished = 0
         self.Player2StonesFinished = 0
-        self.Won = False
+
     def populateMatchfield(self): #Erstellt die 3x8 Matrix
         matchfield = []
         for fieldheight in range(3):
@@ -21,37 +22,39 @@ class Game:
             print()
         return matchfield
 
+    def populateMovefield(self):
+        moveField = []
+        for fieldnumber in range(14):
+            moveField.append(LineField(fieldnumber))
+        return moveField
+
     def start(self):
         print("Im Start")
-        for i in range(2):
 
-            print("Diceroll")
-            roll = self.rollDice()[4] #Forth Element of List is the total amount of steps
+        #while True:  #Diese Schleife muss später den gesamten Code hier umschließen--> Geht solange bis jemand gewonnen hat
+        #if (self.gameFinished() == 0) or (self.gameFinished() == 1):
+        #    break
 
+        print("Diceroll")
+        roll = self.rollDice()[4] #Forth Element of List is the total amount of steps
+        self.showPossibleMoves(roll)
 
-            self.showPossibleMoves(roll)
-            self.renderMatchfield()
+        self.renderAllMovefield()
 
-            self.switchPlayerTurn()
+        self.switchPlayerTurn()
 
     def showPossibleMoves(self,roll):
 
         if roll == 0: #Nothing possible with 0, --> Skip
             return
+
         newStonePossible = self.isNewStonePossible(roll)
-        print("Possible to lay new stone")
-        print(newStonePossible)
+
 
 
     def isNewStonePossible(self,roll):
         roll -=1 #Adjusting to the array 4 -> 3, because 0,1,2,3
         print(roll)
-        if self.PlayerTurn == 0: #White begins and ends in y=2
-            if self.matchfield[2][3-roll].color != self.PlayerTurn:
-                return True
-        else:
-            if self.matchfield[0][3-roll].color != self.PlayerTurn:
-                return True
         return False
 
     def switchPlayerTurn(self):
@@ -75,6 +78,7 @@ class Game:
         for stone in range(7):
             stones.append(Stone(color))
         return stones
+
     def stonesFinished(self):
         player1Finished = 0
         player2Finished = 0
@@ -91,7 +95,54 @@ class Game:
         if player2Finished > self.Player2StonesFinished:
             self.Player2StonesFinished = player2Finished
 
-    def renderMatchfield(self):
+    def gameFinished(self):
+        if self.Player1StonesFinished == 7:
+            print("Player 1 Won")
+            return 0 #SPieler 1 gewonnen
+        elif self.Player2StonesFinished == 7:
+            print("Player 2 Won")
+            return 1 #Spieler 2 geownnen
+
+
+
+    def renderAllMovefield(self):
+
+        for element in self.moveField:
+            if element.color == 0:
+                print("X",end=" ")
+            elif element.color == 1:
+                print("O",end=" ")
+            else:
+                print("E",end=" ")
+        print()
+
+        for element in self.moveField:
+            if element.isPossibleDouble:
+                print("True",end=" ")
+            else:
+                print("False",end=" ")
+        print()
+
+        for element in self.moveField:
+            if element.isRose:
+                print("True",end=" ")
+            else:
+                print("False",end=" ")
+        print()
+
+        for element in self.moveField:
+            if element.isSafeField:
+                print("True",end=" ")
+            else:
+                print("False",end=" ")
+        print()
+
+        for element in self.moveField:
+            print(element.fieldNumber,end=" ")
+
+
+    def renderMatchfield(self): #Erst nach der MoveField implementiernug notwenidg, dann mit den aufgezeigten fkt im kommentar
+        # Muss zum rendern dann durch den moveField laufen und schauen auf welchen Felder was steht. Bei doppelter belegung eben unterschied zw. 1 und 2
         for row in self.matchfield:
             for element in row:
                 if element.color == 0:
@@ -104,7 +155,7 @@ class Game:
 
 
 
-class Field:
+class Field: #Könnte in dieser Form noch sinnvoll für die spätere ausgabe des gerenderten Feld z.b. wenn im Gui Felder untersch. DEsigns haben
     def __init__(self,yPos,xPos):
         self.xPos = xPos
         self.yPos = yPos
@@ -128,16 +179,50 @@ class Field:
 
         return False
 
-    def MovedToField(self,PlayerColor):
-        self.occupied = True
-        self.color = PlayerColor
+class LineField():
+    def __init__(self,fieldNumber):
+        self.color = 2  #Blank
+        self.fieldNumber = fieldNumber
+        self.occupiedWhite = False
+        self.occupiedBlack = False
+        self.isPossibleDouble = self.possibleDoubleOcc()#Schaut ob 2 auf dem Feld stehen können aka Schwarz und weiß KEINE GLEICHEN FARBEN
+        self.isSafeField = self.isSafe()
+        self.isRose = self.AmIRose()
+
+
+    def isSafe(self):
+        if self.fieldNumber < 4:
+            return True
+        if (self.fieldNumber ==12) or (self.fieldNumber ==13):
+            return True
+        if self.fieldNumber == 7: #Mittleres Feld welches Sicher ist
+            return True
+        return False
+
+    def possibleDoubleOcc(self):    #Überprüft ob man doppelt auf einem Feld sein kann
+        if self.fieldNumber < 4:
+            return True
+        if (self.fieldNumber ==12) or (self.fieldNumber ==13):
+            return True
+
+        return False #Kriegerische Zone von 4-11
+
+    def AmIRose(self): #Schauen ob man nochmal Würfeln darf
+        if self.fieldNumber == 3:
+            return True
+        if self.fieldNumber == 7:
+            return True
+        if self.fieldNumber == 13:
+            return True
+        return False
+
 
 class Stone:
     def __init__(self,color,xPos=None,yPos=None):
         self.color = color
         self.xPos = xPos
         self.yPos = yPos
-        self.safe = True
+        self.safe = False
         self.finished = False
     def isSafe(self): #Determines if a Stone is in a safe Zone (Drawing)
         if self.yPos == 0:
