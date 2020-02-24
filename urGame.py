@@ -10,6 +10,8 @@ class Game:
         self.Player2Stones = self.createStones(1)  # Black Stones
         self.Player1StonesFinished = 0
         self.Player2StonesFinished = 0
+        self.Player1StonesOnField = 0
+        self.Player2StonesOnField = 0
 
     def populateMatchfield(self):  # Erstellt die 3x8 Matrix
         matchfield = []
@@ -31,68 +33,112 @@ class Game:
         # while True:  #Diese Schleife muss später den gesamten Code hier umschließen--> Geht solange bis jemand gewonnen hat
         # if (self.gameFinished() == 0) or (self.gameFinished() == 1):
         #    break
+        for i in range(13):
+            print("Diceroll")
+            roll = self.rollDice()[4]  # Forth Element of List is the total amount of steps
 
-        print("Diceroll")
-        roll = self.rollDice()[4]  # Forth Element of List is the total amount of steps
+            move2make = self.showPossibleMoves(roll)
+            self.moveStone(move2make)
+            self.renderMovefield()
 
-        self.showPossibleMoves(roll)
-        # self.renderAllMovefield()
+            self.switchPlayerTurn()
 
-        self.switchPlayerTurn()
+    def movesDialog(self,possibilities):
+        count = 1 #Beginnt bei 1 für den User aber in der Liste dann bei 0
+        if len(possibilities) != 0:
+            for possible in possibilities:
+                print(count, "\t Von ", possible[0], "bis ", possible[1])
+                count += 1
+            selection = int(input("Welchen move willst du machen? Nur INT!\n"))-1  # Muss ein Int sein.    -1 um den echten Index an der 1. Stelle zu bekommen
+            #Keine Abfrage ob man außerhalb der Liste ist vom Index her weil es nicht bei der textbasierten Form bleibt
+            return possibilities[selection]
+        else:
+            return None
+
 
     def showPossibleMoves(self, roll):
-
         if roll == 0:  # Nothing possible with 0, --> Skip
             return
         roll -= 1  # Adjusting to the array 4 -> 3, because 0,1,2,3
         newStonePossible = self.isNewStonePossible(roll)
         print(newStonePossible)
-        possibles = self.movesOtherStones(roll)
-        print(possibles)
+        possibilities = self.movesOtherStones(roll)
+        if newStonePossible == True:
+            possibilities.append([None,roll])
 
-    def movesOtherStones(self,roll): #Zeigt nur an welche Felder rein theoretisch möglich sind. Noch nichts wird bewegt
+        print(possibilities)  # Soll später so sein, dass über Stein gehovert wird und man angezeigt bekommt welchen weg man nimmt
+
+        move2make = self.movesDialog(possibilities)
+        return move2make
+
+    def movesOtherStones(self,
+                         roll):  # Zeigt nur an welche Felder rein theoretisch möglich sind. Noch nichts wird bewegt
         possibleMoves = []
-        print("Roll: ",roll)
-        fieldCount = 0  #Bei welchem Feld man sich momentan befindet Max 13
+        print("Roll: ", roll)
+        fieldCount = 0  # Bei welchem Feld man sich momentan befindet Max 13
         for field in self.moveField:
             if self.PlayerTurn == 0:
-                #print("Player 1")
-                if field.occupiedWhite == True: #Feld finden auf dem ein Stein von dir steht
-                    #print(fieldCount)
-                    if (self.moveField[fieldCount+roll].occupiedWhite != True) and (roll+fieldCount<14): #Muss 14 sein, da man einen mehr braucht als es Felder gibt um ins Ziel zu kommen
-                       if (roll+fieldCount==7) and (self.moveField[7].occupiedBlack == True):
-                           print("Schwarz besetzt den Safespace")
-                       else:
+                # print("Player 1")
+                if field.occupiedWhite == True:  # Feld finden auf dem ein Stein von dir steht
+                    # print(fieldCount)
+                    if (self.moveField[fieldCount + roll].occupiedWhite != True) and (
+                            roll + fieldCount < 14):  # Muss 14 sein, da man einen mehr braucht als es Felder gibt um ins Ziel zu kommen
+                        if (roll + fieldCount == 7) and (self.moveField[7].occupiedBlack == True):
+                            print("Schwarz besetzt den Safespace")
+                        else:
                             print("Appended possible Move to list")
-                            possibleMoves.append([fieldCount,fieldCount+roll]) #Von welchem Feld man ausgeht zur End Destination
+                            possibleMoves.append(
+                                [fieldCount, fieldCount + roll])  # Von welchem Feld man ausgeht zur End Destination
 
 
             else:
-                #print("Player 2")
-                if field.occupiedBlack == True: #Feld finden auf dem ein Stein von dir steht
-                    #print(fieldCount)
-                    if (self.moveField[fieldCount+roll].occupiedBlack != True) and (roll+fieldCount<14): #Muss 14 sein, da man einen mehr braucht als es Felder gibt um ins Ziel zu kommen
-                       if (roll+fieldCount==7) and (self.moveField[7].occupiedWhite == True):
-                           print("Weiß besetzt den Safespace")
-                       else:
+                # print("Player 2")
+                if field.occupiedBlack == True:  # Feld finden auf dem ein Stein von dir steht
+                    # print(fieldCount)
+                    if (self.moveField[fieldCount + roll].occupiedBlack != True) and (
+                            roll + fieldCount < 14):  # Muss 14 sein, da man einen mehr braucht als es Felder gibt um ins Ziel zu kommen
+                        if (roll + fieldCount == 7) and (self.moveField[7].occupiedWhite == True):
+                            print("Weiß besetzt den Safespace")
+                        else:
                             print("Appended possible Move to list")
-                            possibleMoves.append([fieldCount,fieldCount+roll]) #Von welchem Feld man ausgeht zur End Destination
+                            possibleMoves.append(
+                                [fieldCount, fieldCount + roll])  # Von welchem Feld man ausgeht zur End Destination
 
             fieldCount += 1
         return possibleMoves
 
-    def moveStone(self):
-        pass
+    def moveStone(self,toMove): #Liste mit 2 Elementen Anfangspunkt und Endpunkt
+        if toMove == None:  #Wenn es einfach keine Möglichkeit gibt von den Figuren etc her
+            return
+        if toMove[0] == None: #Also neuer Stein wird gesetzt
+            if self.PlayerTurn == 0:    #Spieler 1 also weiß
+                self.moveField[toMove[1]].occupiedWhite = True
+                self.Player1StonesOnField += 1
+            else:
+                self.moveField[toMove[1]].occupiedBlack = True
+                self.Player2StonesOnField += 1
+        else:
+            #Abfrage ob geschmissen wird einfügen
+
+            if self.PlayerTurn == 0:    #Spieler 1 also weiß
+                self.moveField[toMove[0]].occupiedWhite = False
+                self.moveField[toMove[1]].occupiedWhite = True
+            else:
+                self.moveField[toMove[0]].occupiedBlack = False
+                self.moveField[toMove[1]].occupiedBlack = True
 
 
 
     def isNewStonePossible(self, roll):
-
         if self.PlayerTurn == 0:
-            if self.moveField[roll].occupiedWhite:
+            if self.Player1StonesFinished + self.Player1StonesOnField == 7:  # Kann nicht größer sein als 7, da maximal 7 Steine im Spiel sind von einer Farbe
+                return False
+            if (self.moveField[roll].occupiedWhite):
                 return False
         else:
-            if self.moveField[roll].occupiedBlack:
+            if self.Player2StonesFinished + self.Player2StonesOnField == 7:  # Kann nicht größer sein als 7, da maximal 7 Steine im Spiel sind von einer Farbe
+                return False
+            if (self.moveField[roll].occupiedBlack):
                 return False
         return True  # Wenn kein Stein der gleichen Farbe auf dem Feld liegt kann der Zug ausgeführt werden
 
@@ -143,6 +189,22 @@ class Game:
             print("Player 2 Won")
             return 1  # Spieler 2 geownnen
 
+
+    def renderMovefield(self):
+        print("Mit weiß belegt")
+        for element in self.moveField:
+            if element.occupiedWhite == True:
+                print("X", end=" ")
+            else:
+                print("E", end=" ")
+        print()
+        print("Mit schwarz belegt")
+        for element in self.moveField:
+            if element.occupiedBlack == True:
+                print("X", end=" ")
+            else:
+                print("E", end=" ")
+        print()
     def renderAllMovefield(self):  # Zeigt die Werte jedes einzelnen Feldes an im MoveField
 
         for element in self.moveField:
@@ -173,6 +235,20 @@ class Game:
                 print("True", end=" ")
             else:
                 print("False", end=" ")
+        print()
+        print("Mit weiß belegt")
+        for element in self.moveField:
+            if element.occupiedWhite == True:
+                print("X", end=" ")
+            else:
+                print("E", end=" ")
+        print()
+        print("Mit schwarz belegt")
+        for element in self.moveField:
+            if element.occupiedBlack == True:
+                print("X", end=" ")
+            else:
+                print("E", end=" ")
         print()
 
         for element in self.moveField:
@@ -259,7 +335,7 @@ class Stone:
     def __init__(self, color):
         self.color = color
         self.finished = False
-        self.posOnMovefield = None #Auf welchem Feld im Movefield sich der Stein momentan befindet
+        self.posOnMovefield = None  # Auf welchem Feld im Movefield sich der Stein momentan befindet
 
 
 game = Game()
