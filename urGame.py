@@ -36,7 +36,6 @@ class Game:
         roll = self.rollDice()[4]  # Forth Element of List is the total amount of steps
 
         self.showPossibleMoves(roll)
-
         # self.renderAllMovefield()
 
         self.switchPlayerTurn()
@@ -45,12 +44,50 @@ class Game:
 
         if roll == 0:  # Nothing possible with 0, --> Skip
             return
-
+        roll -= 1  # Adjusting to the array 4 -> 3, because 0,1,2,3
         newStonePossible = self.isNewStonePossible(roll)
         print(newStonePossible)
+        possibles = self.movesOtherStones(roll)
+        print(possibles)
+
+    def movesOtherStones(self,roll): #Zeigt nur an welche Felder rein theoretisch möglich sind. Noch nichts wird bewegt
+        possibleMoves = []
+        print("Roll: ",roll)
+        fieldCount = 0  #Bei welchem Feld man sich momentan befindet Max 13
+        for field in self.moveField:
+            if self.PlayerTurn == 0:
+                #print("Player 1")
+                if field.occupiedWhite == True: #Feld finden auf dem ein Stein von dir steht
+                    #print(fieldCount)
+                    if (self.moveField[fieldCount+roll].occupiedWhite != True) and (roll+fieldCount<14): #Muss 14 sein, da man einen mehr braucht als es Felder gibt um ins Ziel zu kommen
+                       if (roll+fieldCount==7) and (self.moveField[7].occupiedBlack == True):
+                           print("Schwarz besetzt den Safespace")
+                       else:
+                            print("Appended possible Move to list")
+                            possibleMoves.append([fieldCount,fieldCount+roll]) #Von welchem Feld man ausgeht zur End Destination
+
+
+            else:
+                #print("Player 2")
+                if field.occupiedBlack == True: #Feld finden auf dem ein Stein von dir steht
+                    #print(fieldCount)
+                    if (self.moveField[fieldCount+roll].occupiedBlack != True) and (roll+fieldCount<14): #Muss 14 sein, da man einen mehr braucht als es Felder gibt um ins Ziel zu kommen
+                       if (roll+fieldCount==7) and (self.moveField[7].occupiedWhite == True):
+                           print("Weiß besetzt den Safespace")
+                       else:
+                            print("Appended possible Move to list")
+                            possibleMoves.append([fieldCount,fieldCount+roll]) #Von welchem Feld man ausgeht zur End Destination
+
+            fieldCount += 1
+        return possibleMoves
+
+    def moveStone(self):
+        pass
+
+
 
     def isNewStonePossible(self, roll):
-        roll -= 1  # Adjusting to the array 4 -> 3, because 0,1,2,3
+
         if self.PlayerTurn == 0:
             if self.moveField[roll].occupiedWhite:
                 return False
@@ -222,6 +259,7 @@ class Stone:
     def __init__(self, color):
         self.color = color
         self.finished = False
+        self.posOnMovefield = None #Auf welchem Feld im Movefield sich der Stein momentan befindet
 
 
 game = Game()
