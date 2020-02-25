@@ -34,7 +34,11 @@ class Game:
         # if (self.gameFinished() == 0) or (self.gameFinished() == 1):
         #    break
         for i in range(13):
-            print("Diceroll")
+            if self.PlayerTurn == 0:
+                print("Weiß")
+            if self.PlayerTurn == 1:
+                print("Schwarz")
+
             roll = self.rollDice()[4]  # Forth Element of List is the total amount of steps
 
             move2make = self.showPossibleMoves(roll)
@@ -47,7 +51,10 @@ class Game:
         count = 1 #Beginnt bei 1 für den User aber in der Liste dann bei 0
         if len(possibilities) != 0:
             for possible in possibilities:
-                print(count, "\t Von ", possible[0], "bis ", possible[1])
+                if possible[0] != None:
+                    print(count, "\t Von ", possible[0]+1, "bis ", possible[1]+1)   #Die +1 weil ein nutzer von 1 beginnt zu zählen und nicht 0
+                else:
+                    print(count, "\t Von ", possible[0], "bis ", possible[1] + 1)
                 count += 1
             selection = int(input("Welchen move willst du machen? Nur INT!\n"))-1  # Muss ein Int sein.    -1 um den echten Index an der 1. Stelle zu bekommen
             #Keine Abfrage ob man außerhalb der Liste ist vom Index her weil es nicht bei der textbasierten Form bleibt
@@ -59,12 +66,12 @@ class Game:
     def showPossibleMoves(self, roll):
         if roll == 0:  # Nothing possible with 0, --> Skip
             return
-        roll -= 1  # Adjusting to the array 4 -> 3, because 0,1,2,3
-        newStonePossible = self.isNewStonePossible(roll)
+        # Hier tritt der Fehler auf: Nur bei neuem Stein wird einer abgezogen sonst nicht. roll -= 1  # Adjusting to the array 4 -> 3, because 0,1,2,3
+        newStonePossible = self.isNewStonePossible(roll-1)  #Null wird mitgezählt
         print(newStonePossible)
         possibilities = self.movesOtherStones(roll)
         if newStonePossible == True:
-            possibilities.append([None,roll])
+            possibilities.append([None,roll-1])
 
         print(possibilities)  # Soll später so sein, dass über Stein gehovert wird und man angezeigt bekommt welchen weg man nimmt
 
@@ -130,17 +137,20 @@ class Game:
 
 
     def isNewStonePossible(self, roll):
+        #roll-=1 #Nur hier wird einer abgezogen weil man das nullte Feld mitzählen muss ansonsten wird normal der roll addiert bei self.moveStones
         if self.PlayerTurn == 0:
             if self.Player1StonesFinished + self.Player1StonesOnField == 7:  # Kann nicht größer sein als 7, da maximal 7 Steine im Spiel sind von einer Farbe
                 return False
-            if (self.moveField[roll].occupiedWhite):
+            if (self.moveField[roll].occupiedWhite == True):
                 return False
         else:
             if self.Player2StonesFinished + self.Player2StonesOnField == 7:  # Kann nicht größer sein als 7, da maximal 7 Steine im Spiel sind von einer Farbe
                 return False
-            if (self.moveField[roll].occupiedBlack):
+            if (self.moveField[roll].occupiedBlack ==  True):
                 return False
         return True  # Wenn kein Stein der gleichen Farbe auf dem Feld liegt kann der Zug ausgeführt werden
+
+
 
     def switchPlayerTurn(self):
         if self.PlayerTurn == 0:
