@@ -45,6 +45,9 @@ class Game:
                 move2make = self.showPossibleMoves(roll)
                 self.moveStone(move2make)
                 self.renderMovefield()
+                self.applyMoveFieldToMatchfield()
+                print("MATCHFIELD")
+                self.renderMatchfield()
                 if self.checkIfRoll(move2make)!=True: #Wenn man nicht auf der Rose ist darf auch nicht nochmal gewürfelt werden
                     break
 
@@ -161,7 +164,7 @@ class Game:
 
     def checkIfFinish(self, toMove):
         if toMove == None:  #Wenn es einfach keine Möglichkeit gibt von den Figuren etc her
-            False
+            return False
         if self.PlayerTurn == 0:
             if toMove[0] + toMove[1] == 15:
                 self.Player1StonesOnField -=1
@@ -188,9 +191,35 @@ class Game:
         return False
 
     def applyMoveFieldToMatchfield(self):
-        pass
+        for row in self.matchfield: #Wipe fields to show up to date field
+            for element in row:
+                element.color = 2
+        for field in self.moveField:
+            fieldNumber = field.fieldNumber
+            if fieldNumber < 4:
+                if field.occupiedWhite == True:
+                    self.matchfield[0][3-fieldNumber].color = 0
+                if field.occupiedBlack == True:
+                    self.matchfield[2][3-fieldNumber].color = 1
+            elif (fieldNumber > 3) and (fieldNumber<12):
+                if field.occupiedWhite == True:
+                    self.matchfield[1][fieldNumber-4].color = 0
+                if field.occupiedBlack == True:
+                    self.matchfield[1][fieldNumber-4].color = 1
+            else:
+                if field.occupiedWhite == True:
+                    if fieldNumber == 12:
+                        self.matchfield[0][7].color = 0
+                    else:
+                        self.matchfield[0][6].color = 0
+                if field.occupiedBlack == True:
+                    if fieldNumber == 12:
+                        self.matchfield[0][7].color = 1
+                    else:
+                        self.matchfield[0][6].color = 1
 
-        # Wenn [0] und [1] == 15 sind setzt man den Stones Finished auf +1 dann stones on board auf -1
+
+
     def isNewStonePossible(self, roll):
         #roll-=1 #Nur hier wird einer abgezogen weil man das nullte Feld mitzählen muss ansonsten wird normal der roll addiert bei self.moveStones
         if self.PlayerTurn == 0:
