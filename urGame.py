@@ -33,11 +33,15 @@ class Game:
         # while True:  #Diese Schleife muss später den gesamten Code hier umschließen--> Geht solange bis jemand gewonnen hat
         # if (self.gameFinished() == 0) or (self.gameFinished() == 1):
         #    break
-        while (self.Player1StonesFinished != 7) or (self.Player1StonesFinished !=0):
+        while (True):
+            if (self.Player1StonesFinished == 7) or (self.Player2StonesFinished == 7):
+                break
             if self.PlayerTurn == 0:
                 print("Weiß")
+                print("Steine Ende: ", self.Player1StonesFinished, "Steine auf Feld:", self.Player1StonesOnField)
             if self.PlayerTurn == 1:
                 print("Schwarz")
+                print("Steine Ende: ", self.Player2StonesFinished, "Steine auf Feld:", self.Player2StonesOnField)
             print()
             while True: #break benötigt wenn Feld keine Rose ist
                 roll = self.rollDice()[4]  # Forth Element of List is the total amount of steps
@@ -52,15 +56,21 @@ class Game:
                     break
 
             self.switchPlayerTurn()
+        if self.Player1StonesFinished == 7:
+            print("SPIELER 1 Gewinnt")
+        if self.Player2StonesFinished == 7:
+            print("SPIELER 2 gewinnt")
 
     def movesDialog(self,possibilities):
         count = 1 #Beginnt bei 1 für den User aber in der Liste dann bei 0
         if len(possibilities) != 0:
             for possible in possibilities:
-                if possible[0] != None:
+                if possible[1] == 14:
+                    print(count, "\t Von ", possible[0] + 1, " ins Ziel")
+                elif possible[0] != None:
                     print(count, "\t Von ", possible[0]+1, "bis ", possible[1]+1)   #Die +1 weil ein nutzer von 1 beginnt zu zählen und nicht 0
                 else:
-                    print(count, "\t Von ", possible[0], "bis ", possible[1] + 1)
+                    print(count, "\t Neuer Stein auf ", possible[1] + 1)
                 count += 1
             selection = int(input("Welchen move willst du machen? Nur INT!\n"))-1  # Muss ein Int sein.    -1 um den echten Index an der 1. Stelle zu bekommen
             #Keine Abfrage ob man außerhalb der Liste ist vom Index her weil es nicht bei der textbasierten Form bleibt
@@ -102,6 +112,8 @@ class Game:
                                 print("Appended possible Move to list")
                                 possibleMoves.append(
                                     [fieldCount, fieldCount + roll])  # Von welchem Feld man ausgeht zur End Destination
+                    if roll + fieldCount == 14:
+                        possibleMoves.append([fieldCount,14])
 
 
             else:
@@ -116,7 +128,8 @@ class Game:
                                 print("Appended possible Move to list")
                                 possibleMoves.append(
                                     [fieldCount, fieldCount + roll])  # Von welchem Feld man ausgeht zur End Destination
-
+                    if roll + fieldCount == 14:
+                        possibleMoves.append([fieldCount,14])
             fieldCount += 1
         return possibleMoves
 
@@ -130,22 +143,26 @@ class Game:
             else:
                 self.moveField[toMove[1]].occupiedBlack = True
                 self.Player2StonesOnField += 1
-        else:
-            #Abfrage ob geschmissen wird einfügen
-            if self.PlayerTurn == 0:    #Spieler 1 also weiß
-                if self.checkIfFinish(toMove) == False:
-                    self.moveField[toMove[0]].occupiedWhite = False
-                    self.moveField[toMove[1]].occupiedWhite = True
-                    self.checkIfKilled(toMove)
-                else:   #Wenn finsihed dann wird nur der ursprüngliche Punkt auf false gesetzt
-                    self.moveField[toMove[0]].occupiedWhite = False
+
+        elif toMove[1] == 14:
+            if self.PlayerTurn == 0:
+                self.moveField[toMove[0]].occupiedWhite = False
+                self.Player1StonesOnField -=1
+                self.Player1StonesFinished +=1
             else:
-                if self.checkIfFinish(toMove) == False:
-                    self.moveField[toMove[0]].occupiedBlack = False
-                    self.moveField[toMove[1]].occupiedBlack = True
-                    self.checkIfKilled(toMove)
-                else:   #Wenn finsihed dann wird nur der ursprüngliche Punkt auf false gesetzt
-                    self.moveField[toMove[0]].occupiedBlack = False
+                self.moveField[toMove[0]].occupiedBlack = False
+                self.Player2StonesOnField -= 1
+                self.Player2StonesFinished += 1
+        else:
+            if self.PlayerTurn == 0:    #Spieler 1 also weiß
+                self.moveField[toMove[0]].occupiedWhite = False
+                self.moveField[toMove[1]].occupiedWhite = True
+                self.checkIfKilled(toMove)
+            else:
+                self.moveField[toMove[0]].occupiedBlack = False
+                self.moveField[toMove[1]].occupiedBlack = True
+                self.checkIfKilled(toMove)
+
 
     def checkIfKilled(self, toMove):
         if toMove == None:  #Wenn es einfach keine Möglichkeit gibt von den Figuren etc her
@@ -162,38 +179,30 @@ class Game:
                 self.moveField[destination].occupiedWhite = False  # Den Stein von dem Feld schlagen
                 print("SPIELR GESHCLAGEN")
 
-    def checkIfFinish(self, toMove):
-        if toMove == None:  #Wenn es einfach keine Möglichkeit gibt von den Figuren etc her
-            return False
-        if self.PlayerTurn == 0:
-            if toMove[0] + toMove[1] == 15:
-                self.Player1StonesOnField -=1
-                self.Player1StonesFinished +=1
-                return True
-            else:
-                return False
-        else:
-            if toMove[0] + toMove[1] == 15:
-                self.Player2StonesOnField -= 1
-                self.Player2StonesFinished += 1
-                return True
-            else:
-                return False
 
 
     def checkIfRoll(self,toMove):
         if toMove == None:  #Wenn es einfach keine Möglichkeit gibt von den Figuren etc her
             return False
         destination = toMove[1]
+        if destination > 13:
+            return False
         if self.moveField[destination].isRose == True:
             print("NOCHMAL WÜRFELN")
             return True
         return False
 
     def applyMoveFieldToMatchfield(self):
+        #Basic Setup: Deletes everything from Field to be able to render form start
         for row in self.matchfield: #Wipe fields to show up to date field
             for element in row:
                 element.color = 2
+        #These 4 are no actual fields in the game
+        self.matchfield[0][4].color = 3
+        self.matchfield[0][5].color = 3
+        self.matchfield[2][4].color = 3
+        self.matchfield[2][5].color = 3
+
         for field in self.moveField:
             fieldNumber = field.fieldNumber
             if fieldNumber < 4:
@@ -214,9 +223,9 @@ class Game:
                         self.matchfield[0][6].color = 0
                 if field.occupiedBlack == True:
                     if fieldNumber == 12:
-                        self.matchfield[0][7].color = 1
+                        self.matchfield[2][7].color = 1
                     else:
-                        self.matchfield[0][6].color = 1
+                        self.matchfield[2][6].color = 1
 
 
 
@@ -357,8 +366,10 @@ class Game:
                     print("X", end=" ")
                 elif element.color == 1:
                     print("O", end=" ")
-                else:
+                elif element.color == 2:
                     print("E", end=" ")
+                else:
+                    print(" ", end=" ") #Wenn wert gleich 3, dann nämlich kein wirkliches Feld
             print()
 
 
