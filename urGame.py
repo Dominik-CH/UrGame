@@ -126,16 +126,58 @@ class Game:
                 self.Player2StonesOnField += 1
         else:
             #Abfrage ob geschmissen wird einfügen
-
             if self.PlayerTurn == 0:    #Spieler 1 also weiß
-                self.moveField[toMove[0]].occupiedWhite = False
-                self.moveField[toMove[1]].occupiedWhite = True
+                if self.checkIfFinish(toMove) == False:
+                    self.moveField[toMove[0]].occupiedWhite = False
+                    self.moveField[toMove[1]].occupiedWhite = True
+                    self.checkIfKilled(toMove)
+                else:   #Wenn finsihed dann wird nur der ursprüngliche Punkt auf false gesetzt
+                    self.moveField[toMove[0]].occupiedWhite = False
             else:
-                self.moveField[toMove[0]].occupiedBlack = False
-                self.moveField[toMove[1]].occupiedBlack = True
+                if self.checkIfFinish(toMove) == False:
+                    self.moveField[toMove[0]].occupiedBlack = False
+                    self.moveField[toMove[1]].occupiedBlack = True
+                    self.checkIfKilled(toMove)
+                else:   #Wenn finsihed dann wird nur der ursprüngliche Punkt auf false gesetzt
+                    self.moveField[toMove[0]].occupiedBlack = False
+
+    def checkIfKilled(self, toMove):
+        destination = toMove[1]
+        if self.PlayerTurn == 0:
+            if (self.moveField[destination].isSafe() == False) and (self.moveField[destination].occupiedBlack == True):
+                self.Player2StonesOnField -=1
+                self.moveField[destination].occupiedBlack = False #Den Stein von dem Feld schlagen
+                print("SPIELR GESHCLAGEN")
+        else:
+            if (self.moveField[destination].isSafe() == False) and (self.moveField[destination].occupiedWhite == True):
+                self.Player1StonesOnField -= 1
+                self.moveField[destination].occupiedWhite = False  # Den Stein von dem Feld schlagen
+                print("SPIELR GESHCLAGEN")
+
+    def checkIfFinish(self, toMove):
+        if self.PlayerTurn == 0:
+            if toMove[0] + toMove[1] == 15:
+                self.Player1StonesOnField -=1
+                self.Player1StonesFinished +=1
+                return True
+            else:
+                return False
+        else:
+            if toMove[0] + toMove[1] == 15:
+                self.Player2StonesOnField -= 1
+                self.Player2StonesFinished += 1
+                return True
+            else:
+                return False
 
 
+    def checkIfRoll(self,toMove):
+        pass
 
+    def applyMoveFieldToMatchfield(self):
+        pass
+
+        # Wenn [0] und [1] == 15 sind setzt man den Stones Finished auf +1 dann stones on board auf -1
     def isNewStonePossible(self, roll):
         #roll-=1 #Nur hier wird einer abgezogen weil man das nullte Feld mitzählen muss ansonsten wird normal der roll addiert bei self.moveStones
         if self.PlayerTurn == 0:
